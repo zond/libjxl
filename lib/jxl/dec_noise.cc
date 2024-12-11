@@ -148,6 +148,9 @@ Status DecodeNoise(BitReader* br, NoiseParams* noise_params) {
   for (float& i : noise_params->lut) {
     DecodeFloatParam(kNoisePrecision, &i, br);
   }
+  for (int i = 0; i < 8; i++) {
+	  printf("noise param %d: %f\n", i, noise_params->lut[i]);
+  }
   return true;
 }
 

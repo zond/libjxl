@@ -65,6 +65,11 @@
 #include "lib/jxl/jpeg/enc_jpeg_data.h"
 #include "lib/jxl/jpeg/jpeg_data.h"
 #include "lib/jxl/padded_bytes.h"
+#include "lib/jxl/render_pipeline/render_pipeline.h"
+#include "lib/jxl/render_pipeline/render_pipeline_stage.h"
+#include "lib/jxl/render_pipeline/simple_render_pipeline.h"
+#include "lib/jxl/render_pipeline/stage_noise.h"
+#include "lib/jxl/render_pipeline/stage_write.h"
 #include "lib/jxl/test_image.h"
 #include "lib/jxl/test_memory_manager.h"
 #include "lib/jxl/test_utils.h"
@@ -5676,4 +5681,45 @@ TEST(DecodeTest, CloseInput) {
   EXPECT_EQ(JXL_DEC_NEED_MORE_INPUT, JxlDecoderProcessInput(dec.get()));
   JxlDecoderCloseInput(dec.get());
   EXPECT_EQ(JXL_DEC_ERROR, JxlDecoderProcessInput(dec.get()));
+}
+
+TEST(NoiseStage, Golden) {
+  const size_t xsize = 8;
+  const size_t ysize = 8;
+  JxlMemoryManager* memory_manager = jxl::test::MemoryManager();
+  jxl::RenderPipeline::Builder builder(memory_manager, 3);
+  jxl::NoiseParams noise_params{.lut = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f}};
+  jxl::ColorCorrelation color_correlation;
+  EXPECT_TRUE(builder.AddStage(GetAddNoiseStage(noise_params, color_correlation, 0)));
+  Image3F image;
+  JXL_ASSIGN_OR_QUIT(image, jxl::Image3F::Create(memory_manager, xsize, ysize), "blepp");
+  EXPECT_TRUE(builder.AddStage(GetWriteToImage3FStage(memory_manager, &image)));
+  jxl::FrameDimensions frame_dimensions;
+  frame_dimensions.Set(xsize, ysize, 0, 0, 0, false, 1);
+  std::unique_ptr<jxl::RenderPipeline> render_pipeline;
+  JXL_ASSIGN_OR_QUIT(render_pipeline, std::move(builder).Finalize(frame_dimensions), "hurg");
+  EXPECT_TRUE(render_pipeline->IsInitialized());
+  EXPECT_TRUE(render_pipeline->PrepareForThreads(1, false));
+  jxl::RenderPipelineInput pipeline_input = render_pipeline->GetInputBuffers(0, 0);
+  for (int c = 0; c < 3; c++) {
+    std::pair<jxl::ImageF*, jxl::Rect> buffers = pipeline_input.GetBuffer(c);
+	float pixel = 0.0f;
+	for (size_t y = 0; y < ysize; y++) {
+		for (size_t x = 0; x < xsize; x++) {
+			pixel += 0.1f;
+			buffers.first->Row(y)[x] = pixel;
+		}
+	}
+  }
+  EXPECT_TRUE(pipeline_input.Done());
+  EXPECT_TRUE(render_pipeline->PassesWithAllInput());	 
+  for (int c = 0; c < 3; c++) {
+	  printf("channel %d\n", c);
+	  for (size_t y = 0; y < ysize; y++) {
+		  for (size_t x = 0; x < xsize; x++) {
+			  printf("%f, ", image.PlaneRow(c, y)[x]);
+		  }
+		  printf("\n");
+	  }
+  }
 }

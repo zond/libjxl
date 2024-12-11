@@ -194,6 +194,11 @@ class AddNoiseStage : public RenderPipelineStage {
     // shuffles are otherwise done on the data, so this is safe.
     msan::UnpoisonMemory(row_x + xsize, (xsize_v - xsize) * sizeof(float));
     msan::UnpoisonMemory(row_y + xsize, (xsize_v - xsize) * sizeof(float));
+	  const auto loadfloats = [&](auto v){
+		  std::vector<float> f(Lanes(d));
+		  StoreU(v, d, f.data());
+		  return f;
+	  };
     for (size_t x = 0; x < xsize_v; x += Lanes(d)) {
       const auto vx = LoadU(d, row_x + x);
       const auto vy = LoadU(d, row_y + x);
@@ -206,6 +211,14 @@ class AddNoiseStage : public RenderPipelineStage {
           Mul(LoadU(d, row_rnd_g + x), norm_const);
       const auto addit_rnd_noise_correlated =
           Mul(LoadU(d, row_rnd_c + x), norm_const);
+	  auto addit_rnd_noise_red_vec = loadfloats(addit_rnd_noise_red);
+	  auto addit_rnd_noise_green_vec = loadfloats(addit_rnd_noise_green);
+	  auto addit_rnd_noise_correlated_vec = loadfloats(addit_rnd_noise_correlated);
+	  auto noise_strength_g_vec = loadfloats(noise_strength_g);
+	  auto noise_strength_r_vec = loadfloats(noise_strength_r);
+	  for (size_t offset = 0; offset < Lanes(d); offset++) {
+		  printf("%f, %f, %f, %f, %f, %f, %f\n", addit_rnd_noise_red_vec[offset], addit_rnd_noise_green_vec[offset], addit_rnd_noise_correlated_vec[offset], noise_strength_g_vec[offset], noise_strength_r_vec[offset], ytox, ytob);
+	  }
       AddNoiseToRGB(D(), addit_rnd_noise_red, addit_rnd_noise_green,
                     addit_rnd_noise_correlated, noise_strength_g,
                     noise_strength_r, ytox, ytob, row_x + x, row_y + x,
