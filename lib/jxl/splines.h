@@ -77,7 +77,6 @@ class QuantizedSpline {
                 ANSSymbolReader* decoder, BitReader* br,
                 size_t max_control_points, size_t* total_num_control_points);
 
- private:
   friend class QuantizedSplineEncoder;
 
   std::vector<std::pair<int64_t, int64_t>>

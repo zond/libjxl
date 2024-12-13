@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <ostream>
+
 #include <utility>
 #include <vector>
 
@@ -56,18 +57,67 @@ const float kYToB = color_correlation.YtoBRatio(0);
 
 constexpr float kTolerance = 0.003125;
 
+void printspline(const Spline& spline, const size_t estimated_area_reached) {
+	std::cerr << "Spline{\n  control_points: vec![";
+	for (const auto& cp : spline.control_points) {
+		std::cerr << "Point{x: " << cp.x << ".0, y: " << cp.y << ".0}, ";
+	}
+	std::cerr << "],\n  color_dct: [";
+	for (int i = 0; i < 3; i++) {
+		std::cerr << "[";
+		for (int j = 0; j < 32; j++) {
+			std::cerr << spline.color_dct[i][j] << ", ";
+		}
+		std::cerr << "], ";
+	}
+	std::cerr << "],\n  sigma_dct: [";
+	for (int i = 0; i < 32; i++) {
+		std::cerr << spline.sigma_dct[i] << ", ";
+	}
+	std::cerr << "],\n  estimated_area_reached: " << estimated_area_reached << ",\n}\n";
+}
+
+void printqspline(const QuantizedSpline& qspline) {
+	std::cerr << "QuantizedSpline{\n  control_points: vec![";
+	for (const auto& cp : qspline.control_points_) {
+		std::cerr << "(" << cp.first << ", " << cp.second << "), ";
+	}
+	std::cerr << "],\n  color_dct: [";
+	for (int i = 0; i < 3; i++) {
+		std::cerr << "[";
+		for (int j = 0; j < 32; j++) {
+			std::cerr << qspline.color_dct_[i][j] << ", ";
+		}
+		std::cerr << "], ";
+	}
+	std::cerr << "],\n  sigma_dct: [";
+	for (int i = 0; i < 32; i++) {
+		std::cerr << qspline.sigma_dct_[i] << ", ";
+	}
+	std::cerr << "],\n}\n";
+}
+
 Status DequantizeSplines(const Splines& splines,
                          std::vector<Spline>& dequantized) {
   const auto& quantized_splines = splines.QuantizedSplines();
   const auto& starting_points = splines.StartingPoints();
   JXL_ENSURE(quantized_splines.size() == starting_points.size());
 
+  std::cerr << "y_to_x=" << kYToX << "\n";
+  std::cerr << "x_to_b=" << kYToB << "\n";
+
   uint64_t total = 0;
   for (size_t i = 0; i < quantized_splines.size(); ++i) {
     dequantized.emplace_back();
+	size_t s = total;
     JXL_RETURN_IF_ERROR(quantized_splines[i].Dequantize(
         starting_points[i], kQuantizationAdjustment, kYToX, kYToB, 2u << 30u,
         &total, dequantized.back()));
+	std::cerr << "(";
+	printqspline(quantized_splines[i]);
+	std::cerr << ",\n";
+	printspline(dequantized[i], total - s);
+	std::cerr << "),\n";
   }
   return true;
 }
