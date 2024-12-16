@@ -74,6 +74,8 @@ Status DequantizeSplines(const Splines& splines,
 
 }  // namespace
 
+TEST(SplinesTest, DrawCentripetalCatmullRomSpline) { DrawTestSplines(); }
+
 TEST(SplinesTest, Serialization) {
   JxlMemoryManager* memory_manager = jxl::test::MemoryManager();
   Spline spline1{

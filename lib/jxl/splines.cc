@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cinttypes>  // PRIu64
 #include <cmath>
+#include <iostream>
 #include <limits>
 
 #include "lib/jxl/base/common.h"
@@ -620,6 +621,22 @@ void Splines::AddToRow(float* JXL_RESTRICT row_x, float* JXL_RESTRICT row_y,
 
 void Splines::SubtractFrom(Image3F* const opsin) const {
   Apply</*add=*/false>(opsin, Rect(*opsin));
+}
+
+void DrawTestSplines() {
+  std::vector<Spline::Point> p0 = {Spline::Point(1.0, 2.0),
+                                   Spline::Point(4.0, 3.0)};
+  std::vector<Spline::Point> p1;
+  DrawCentripetalCatmullRomSpline(p0, p1);
+  std::cerr << "p0\n";
+  for (const auto& p : p0) {
+    std::cerr << "Point{x: " << p.x << ", y: " << p.y << "},\n";
+  }
+  std::cerr << "\np1\n";
+  for (const auto& p : p1) {
+    std::cerr << "Point{x: " << p.x << ", y: " << p.y << "},\n";
+  }
+  std::cerr << "\n";
 }
 
 Status Splines::InitializeDrawCache(const size_t image_xsize,
