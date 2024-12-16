@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cinttypes>  // PRIu64
 #include <cmath>
+#include <iostream>
 #include <limits>
 
 #include "lib/jxl/base/common.h"
@@ -330,37 +331,87 @@ void DrawCentripetalCatmullRomSpline(std::vector<Spline::Point> points,
 //               (unless those are one); I believe both ends matter.
 template <typename Points, typename Functor>
 Status ForEachEquallySpacedPoint(const Points& points, const Functor& functor) {
-  JXL_ENSURE(!points.empty());
-  Spline::Point current = points.front();
-  functor(current, kDesiredRenderingDistance);
-  auto next = points.begin();
-  while (next != points.end()) {
-    const Spline::Point* previous = &current;
-    float arclength_from_previous = 0.f;
-    for (;;) {
-      if (next == points.end()) {
-        functor(*previous, arclength_from_previous);
-        return true;
-      }
-      const float arclength_to_next =
-          std::sqrt((*next - *previous).SquaredNorm());
-      if (arclength_from_previous + arclength_to_next >=
-          kDesiredRenderingDistance) {
-        current =
-            *previous + ((kDesiredRenderingDistance - arclength_from_previous) /
-                         arclength_to_next) *
-                            (*next - *previous);
-        functor(current, kDesiredRenderingDistance);
-        break;
-      }
-      arclength_from_previous += arclength_to_next;
-      previous = &*next;
-      ++next;
+  if (points.empty()) {
+    return true;
+  }
+  float accumulated_distance = 0.0f;
+  functor(points[0], kDesiredRenderingDistance);
+  if (points.size() == 1) {
+    return true;
+  }
+  for (size_t index = 0; index < points.size() - 1; index++) {
+    Spline::Point current = points[index];
+    Spline::Point next = points[index + 1];
+    Vector segment = next - current;
+    float segment_length = hypotf(segment.x, segment.y);
+    Vector unit_step = (1.0f / segment_length) * segment;
+    if (accumulated_distance + segment_length > kDesiredRenderingDistance) {
+      current = current +
+                (kDesiredRenderingDistance - accumulated_distance) * unit_step;
+      functor(current, kDesiredRenderingDistance);
+      accumulated_distance -= kDesiredRenderingDistance;
+    }
+
+    accumulated_distance += segment_length;
+
+    while (accumulated_distance >= kDesiredRenderingDistance) {
+      current = current + kDesiredRenderingDistance * unit_step;
+      functor(current, kDesiredRenderingDistance);
+      accumulated_distance -= kDesiredRenderingDistance;
     }
   }
+  functor(points[points.size() - 1], accumulated_distance);
   return true;
+  // JXL_ENSURE(!points.empty());
+  // Spline::Point current = points.front();
+  // std::cerr << "calling on current: " << current.x << "," << current.y <<
+  // "\n"; functor(current, kDesiredRenderingDistance); auto next =
+  // points.begin(); while (next != points.end()) {
+  //   const Spline::Point* previous = &current;
+  //   float arclength_from_previous = 0.f;
+  //   for (;;) {
+  //     if (next == points.end()) {
+  //       std::cerr << "calling on last: " << previous->x << "," << previous->y
+  //                 << "\n";
+  //       functor(*previous, arclength_from_previous);
+  //       return true;
+  //     }
+  //     const float arclength_to_next =
+  //         std::sqrt((*next - *previous).SquaredNorm());
+  //     std::cerr << "prev: " << previous->x << "," << previous->y
+  //               << ", next: " << next->x << "," << next->y
+  //               << ", from_prev: " << arclength_from_previous
+  //               << ", to_next: " << arclength_to_next << "\n";
+  //     if (arclength_from_previous + arclength_to_next >=
+  //         kDesiredRenderingDistance) {
+  //       current =
+  //           *previous + ((kDesiredRenderingDistance -
+  //           arclength_from_previous) /
+  //                        arclength_to_next) *
+  //                           (*next - *previous);
+  //       std::cerr << "calling on current: " << current.x << "," << current.y
+  //                 << "\n";
+  //       functor(current, kDesiredRenderingDistance);
+  //       std::cerr << "breaking the step-through-segments loop\n";
+  //       break;
+  //     }
+  //     arclength_from_previous += arclength_to_next;
+  //     previous = &*next;
+  //     ++next;
+  //   }
+  // }
+  // return true;
 }
+/*
 
+a--x-b
+     |
+     x
+     |
+     c
+
+
+*/
 }  // namespace
 
 StatusOr<QuantizedSpline> QuantizedSpline::Create(
