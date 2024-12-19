@@ -25,6 +25,8 @@ namespace jxl {
 
 void DrawTestSplines();
 
+void PrintDct32();
+
 class ANSSymbolReader;
 class BitReader;
 

@@ -197,6 +197,17 @@ HWY_AFTER_NAMESPACE();
 namespace jxl {
 HWY_EXPORT(SegmentsFromPoints);
 HWY_EXPORT(DrawSegments);
+HWY_EXPORT(ContinuousIDCT);
+
+void PrintDct32() {
+  Dct32 dct;
+  for (int i = 0; i < 32; i++) {
+    dct[i] = 0.05f * static_cast<float>(i);
+  }
+  for (float t = 0; t < 32.0; t++) {
+    std::cerr << HWY_DYNAMIC_DISPATCH(ContinuousIDCT)(dct, t) << ", ";
+  }
+}
 
 namespace {
 
