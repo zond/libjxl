@@ -23,6 +23,8 @@
 
 namespace jxl {
 
+void AddSegments();
+
 class ANSSymbolReader;
 class BitReader;
 

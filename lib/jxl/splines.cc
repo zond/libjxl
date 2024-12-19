@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cinttypes>  // PRIu64
 #include <cmath>
+#include <iostream>
 #include <limits>
 
 #include "lib/jxl/base/common.h"
@@ -196,6 +197,60 @@ HWY_AFTER_NAMESPACE();
 namespace jxl {
 HWY_EXPORT(SegmentsFromPoints);
 HWY_EXPORT(DrawSegments);
+HWY_EXPORT(ComputeSegments);
+
+void AddSegments() {
+  auto center = Spline::Point(10.0f, 20.0f);
+  std::vector<SplineSegment> segments;
+  std::vector<std::pair<size_t, size_t>> segments_by_y;
+  std::array<float, 3> color = {0.5, 0.6, 0.7};
+  HWY_DYNAMIC_DISPATCH(ComputeSegments)(center, 0.5f, color.data(), 0.8f,
+                                        segments, segments_by_y);
+  for (const auto& segment : segments) {
+    std::cerr << "SplineSegment{center_x: " << segment.center_x
+              << ", center_y: " << segment.center_y << ", color: ["
+              << segment.color[0] << ", " << segment.color[1] << ", "
+              << segment.color[2] << "], inv_sigma: " << segment.inv_sigma
+              << ", maximum_distance: " << segment.maximum_distance
+              << ", sigma_over_4_times_intensity: "
+              << segment.sigma_over_4_times_intensity << "},\n";
+  }
+  for (const auto& pair : segments_by_y) {
+    std::cerr << "(" << pair.first << ", " << pair.second << "),\n";
+  }
+  std::array<Dct32, 3> color_dct;
+  for (int chan = 0; chan < 3; chan++) {
+    for (int coeff = 0; coeff < 32; coeff++) {
+      color_dct[chan][coeff] =
+          0.1f * static_cast<float>(chan) + 0.05f * static_cast<float>(coeff);
+    }
+  }
+  Dct32 sigma_dct;
+  for (int coeff = 0; coeff < 32; coeff++) {
+    sigma_dct[coeff] = 0.06f * static_cast<float>(coeff);
+  }
+  auto spline = Spline{.color_dct = color_dct, .sigma_dct = sigma_dct};
+  std::vector<std::pair<Spline::Point, float>> points_to_draw;
+  points_to_draw.push_back({Spline::Point(10.0f, 20.0f), 1.0f});
+  points_to_draw.push_back({Spline::Point(11.0f, 21.0f), 1.0f});
+  points_to_draw.push_back({Spline::Point(12.0f, 21.0f), 1.0f});
+  segments.clear();
+  segments_by_y.clear();
+  HWY_DYNAMIC_DISPATCH(SegmentsFromPoints)(spline, points_to_draw, sqrt(2) + 1,
+                                           segments, segments_by_y);
+  for (const auto& segment : segments) {
+    std::cerr << "SplineSegment{center_x: " << segment.center_x
+              << ", center_y: " << segment.center_y << ", color: ["
+              << segment.color[0] << ", " << segment.color[1] << ", "
+              << segment.color[2] << "], inv_sigma: " << segment.inv_sigma
+              << ", maximum_distance: " << segment.maximum_distance
+              << ", sigma_over_4_times_intensity: "
+              << segment.sigma_over_4_times_intensity << "},\n";
+  }
+  for (const auto& pair : segments_by_y) {
+    std::cerr << "(" << pair.first << ", " << pair.second << "),\n";
+  }
+}
 
 namespace {
 
