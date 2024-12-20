@@ -23,6 +23,8 @@
 
 namespace jxl {
 
+void PrintInitializeDrawCache();
+
 class ANSSymbolReader;
 class BitReader;
 
@@ -61,6 +63,15 @@ class QuantizedSplineEncoder;
 
 class QuantizedSpline {
  public:
+  QuantizedSpline(std::vector<std::pair<int64_t, int64_t>> cp,
+                  std::vector<std::vector<int>> cd, std::vector<int> sd)
+      : control_points_(cp) {
+    for (int c = 0; c < 3; c++) {
+      memcpy(color_dct_[c], cd[c].data(), sizeof(int) * 32);
+    }
+    memcpy(sigma_dct_, sd.data(), sizeof(int) * 32);
+  }
+
   QuantizedSpline() = default;
 
   // TODO(eustas): move this out of library code
@@ -77,7 +88,6 @@ class QuantizedSpline {
                 ANSSymbolReader* decoder, BitReader* br,
                 size_t max_control_points, size_t* total_num_control_points);
 
- private:
   friend class QuantizedSplineEncoder;
 
   std::vector<std::pair<int64_t, int64_t>>
@@ -133,7 +143,8 @@ class Splines {
   Status InitializeDrawCache(size_t image_xsize, size_t image_ysize,
                              const ColorCorrelation& color_correlation);
 
- private:
+  Status InitializeDrawCache(size_t image_xsize, size_t image_ysize);
+
   template <bool>
   void ApplyToRow(float* JXL_RESTRICT row_x, float* JXL_RESTRICT row_y,
                   float* JXL_RESTRICT row_b, size_t y, size_t x0,

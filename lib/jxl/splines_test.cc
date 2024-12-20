@@ -215,6 +215,8 @@ TEST(SplinesTest, Serialization) {
   }
 }
 
+TEST(SplinesTest, PrintInitDrawCache) { PrintInitializeDrawCache(); }
+
 TEST(SplinesTest, TooManySplinesTest) {
   if (JXL_CRASH_ON_ERROR) {
     GTEST_SKIP() << "Skipping due to JXL_CRASH_ON_ERROR";

@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cinttypes>  // PRIu64
 #include <cmath>
+#include <iostream>
 #include <limits>
 
 #include "lib/jxl/base/common.h"
@@ -196,6 +197,83 @@ HWY_AFTER_NAMESPACE();
 namespace jxl {
 HWY_EXPORT(SegmentsFromPoints);
 HWY_EXPORT(DrawSegments);
+
+void PrintInitializeDrawCache() {
+  Splines splines;
+  splines.quantization_adjustment_ = 0;
+  splines.splines_.push_back(QuantizedSpline(
+      {{109, 105}, {-247, -261}, {168, 427}, {-46, -360}, {-61, 181}},
+      {
+          {
+              12223, 9452,  5524,  16071, 1048,  17024, 14833, 7690,
+              21952, 2405,  2571,  2190,  1452,  2500,  18833, 1667,
+              5857,  21619, 1310,  20000, 10429, 11667, 7976,  18786,
+              12976, 18548, 14786, 12238, 8667,  3405,  19929, 8429,
+          },
+          {
+              177, 712,  127, 999,  969, 356,  105,  12,  1132, 309, 353,
+              415, 1213, 156, 988,  524, 316,  1100, 64,  36,   816, 1285,
+              183, 889,  839, 1099, 79,  1316, 287,  105, 689,  841,
+          },
+          {
+              780, -201, -38,  -695, -563, -293,  -88, 1400, -357, 520,  979,
+              431, -118, 590,  -971, -127, 157,   206, 1266, 204,  -320, -223,
+              704, -687, -276, -716, 787,  -1121, 40,  292,  249,  -10,
+          },
+      },
+      {139, 65,  133, 5,   137, 272, 88,  178, 71,  256, 254,
+       82,  126, 252, 152, 53,  281, 15,  8,   209, 285, 156,
+       73,  56,  36,  287, 86,  244, 270, 94,  224, 156}));
+  splines.splines_.push_back(QuantizedSpline(
+      {
+          {24, -32},
+          {-178, -7},
+          {226, 151},
+          {121, -172},
+          {-184, 39},
+          {-201, -182},
+          {301, 404},
+      },
+      {
+          {
+              5051,  6881,  5238,  1571,  9952,  19762, 2048,  13524,
+              16405, 2310,  1286,  4714,  16857, 21429, 12500, 15524,
+              1857,  5595,  6286,  17190, 15405, 20738, 310,   16071,
+              10952, 16286, 15571, 8452,  6929,  3095,  9905,  5690,
+          },
+          {
+              899, 1059, 836,  388,  1291, 247, 235, 203,  1073, 747,  1283,
+              799, 356,  1281, 1231, 561,  477, 720, 309,  733,  1013, 477,
+              779, 1183, 32,   1041, 1275, 367, 88,  1047, 321,  931,
+          },
+          {
+              -78,  244,  -883, 943,  -682, 752, 107, 262,   -75, 557,   -202,
+              -575, -231, -731, -605, 732,  682, 650, 592,   -14, -1035, 913,
+              -188, -95,  286,  -574, -509, 67,  86,  -1056, 592, 380,
+          },
+      },
+      {
+          308, 8,   125, 7,   119, 237, 209, 60,  277, 215, 126,
+          186, 90,  148, 211, 136, 188, 142, 140, 124, 272, 140,
+          274, 165, 24,  209, 76,  254, 185, 83,  11,  141,
+      }));
+  splines.starting_points_ = {Spline::Point(10.0, 20.0),
+                              Spline::Point(5.0, 40.0)};
+  if (!splines.InitializeDrawCache(1 << 15, 1 << 15)) {
+    std::cerr << "wth";
+  }
+  for (size_t i = 0; i < splines.segments_.size(); i++) {
+    auto segment = splines.segments_[i];
+    std::cerr << "(" << i << ", SplineSegment{center_x: " << segment.center_x
+              << ", center_y: " << segment.center_y << ", color: ["
+              << segment.color[0] << ", " << segment.color[1] << ", "
+              << segment.color[2] << "], inv_sigma: " << segment.inv_sigma
+              << ", maximum_distance: " << segment.maximum_distance
+              << ", sigma_over_4_times_intensity: "
+              << segment.sigma_over_4_times_intensity << "}),\n";
+  }
+  std::cerr << splines.segments_.size() << " segments\n";
+}
 
 namespace {
 
@@ -630,6 +708,11 @@ void Splines::SubtractFrom(Image3F* const opsin) const {
 Status Splines::InitializeDrawCache(const size_t image_xsize,
                                     const size_t image_ysize,
                                     const ColorCorrelation& color_correlation) {
+  return InitializeDrawCache(image_xsize, image_ysize);
+}
+
+Status Splines::InitializeDrawCache(const size_t image_xsize,
+                                    const size_t image_ysize) {
   // TODO(veluca): avoid storing segments that are entirely outside image
   // boundaries.
   segments_.clear();
@@ -639,11 +722,12 @@ Status Splines::InitializeDrawCache(const size_t image_xsize,
   std::vector<Spline::Point> intermediate_points;
   uint64_t total_estimated_area_reached = 0;
   std::vector<Spline> splines;
+  float y_to_x = 0.0;
+  float y_to_b = 0.0;
   for (size_t i = 0; i < splines_.size(); ++i) {
     Spline spline;
     JXL_RETURN_IF_ERROR(splines_[i].Dequantize(
-        starting_points_[i], quantization_adjustment_,
-        color_correlation.YtoXRatio(0), color_correlation.YtoBRatio(0),
+        starting_points_[i], quantization_adjustment_, y_to_x, y_to_b,
         image_xsize * image_ysize, &total_estimated_area_reached, spline));
     if (std::adjacent_find(spline.control_points.begin(),
                            spline.control_points.end()) !=
