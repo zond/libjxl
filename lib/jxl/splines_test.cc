@@ -18,6 +18,7 @@
 #include "lib/extras/codec.h"
 #include "lib/jxl/base/common.h"
 #include "lib/jxl/base/compiler_specific.h"
+#include "lib/jxl/base/fast_math-inl.h"
 #include "lib/jxl/base/printf_macros.h"
 #include "lib/jxl/base/rect.h"
 #include "lib/jxl/base/span.h"
@@ -73,6 +74,12 @@ Status DequantizeSplines(const Splines& splines,
 }
 
 }  // namespace
+
+TEST(SplinesTest, GoldenFastErff) {
+  for (float f = -0.9; f < 1.0; f += 0.1) {
+    printf("%f\n", jxl::FastErff(f));
+  }
+}
 
 TEST(SplinesTest, Serialization) {
   JxlMemoryManager* memory_manager = jxl::test::MemoryManager();
