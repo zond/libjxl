@@ -259,6 +259,7 @@ void PrintInitializeDrawCache() {
       }));
   splines.starting_points_ = {Spline::Point(10.0, 20.0),
                               Spline::Point(5.0, 40.0)};
+  std::cerr.precision(10);
   if (!splines.InitializeDrawCache(1 << 15, 1 << 15)) {
     std::cerr << "wth";
   }
