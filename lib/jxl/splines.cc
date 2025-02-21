@@ -628,6 +628,7 @@ void DrawTestSplines() {
                                    Spline::Point(4.0, 3.0)};
   std::vector<Spline::Point> p1;
   DrawCentripetalCatmullRomSpline(p0, p1);
+  std::cerr.precision(10);
   std::cerr << "p0\n";
   for (const auto& p : p0) {
     std::cerr << "Point{x: " << p.x << ", y: " << p.y << "},\n";
