@@ -205,7 +205,7 @@ void PrintDct32() {
     dct[i] = 0.05f * static_cast<float>(i);
   }
   for (float t = 0; t < 32.0; t++) {
-    std::cerr << HWY_DYNAMIC_DISPATCH(ContinuousIDCT)(dct, t) << ", ";
+    printf("%.10f,\n", HWY_DYNAMIC_DISPATCH(ContinuousIDCT)(dct, t));
   }
 }
 
