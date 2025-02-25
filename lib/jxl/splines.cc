@@ -679,6 +679,7 @@ Status Splines::InitializeDrawCache(const size_t image_xsize,
       // This spline wouldn't have any effect.
       continue;
     }
+    spline.Describe();
     HWY_DYNAMIC_DISPATCH(SegmentsFromPoints)
     (spline, points_to_draw, arc_length, segments_, segments_by_y);
   }

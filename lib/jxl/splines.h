@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -55,6 +56,26 @@ struct Spline {
   // Splines are draws by normalized Gaussian splatting. This controls the
   // Gaussian's parameter along the spline.
   Dct32 sigma_dct;
+
+  void Describe() {
+    std::cerr << "Spline { control_points: [";
+    for (const auto& point : control_points) {
+      std::cerr << "Point {x: " << point.x << ", y: " << point.y << "}, ";
+    }
+    std::cerr << "] color_dct: [";
+    for (const auto& dct : color_dct) {
+      std::cerr << "Dct32([";
+      for (const auto val : dct) {
+        std::cerr << val << ", ";
+      }
+      std::cerr << "]), ";
+    }
+    std::cerr << "], sigma_dct: [Dct32([";
+    for (const auto val : sigma_dct) {
+      std::cerr << val << ", ";
+    }
+    std::cerr << "}\n";
+  };
 };
 
 class QuantizedSplineEncoder;
