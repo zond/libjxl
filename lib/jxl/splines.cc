@@ -458,11 +458,15 @@ Status QuantizedSpline::Dequantize(const Spline::Point& starting_point,
       const float inv_dct_factor = (i == 0) ? kSqrt0_5 : 1.0f;
       result.color_dct[c][i] =
           color_dct_[c][i] * inv_dct_factor * kChannelWeight[c] * inv_quant;
+      if (c == 2 && i < 4)
+        std::cerr << y_to_b << ": " << i << ": " << result.color_dct[2][i]
+                  << "\n";
     }
   }
   for (int i = 0; i < 32; ++i) {
     result.color_dct[0][i] += y_to_x * result.color_dct[1][i];
     result.color_dct[2][i] += y_to_b * result.color_dct[1][i];
+    if (i < 4) std::cerr << i << ": " << result.color_dct[2][i] << "\n";
   }
   uint64_t width_estimate = 0;
 

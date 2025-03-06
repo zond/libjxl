@@ -317,6 +317,7 @@ TEST(SplinesTest, Drawing) {
         QuantizedSpline qspline,
         QuantizedSpline::Create(spline, kQuantizationAdjustment, kYToX, kYToB),
         "Failed to create QuantizedSpline.");
+    qspline.Describe();
     quantized_splines.emplace_back(std::move(qspline));
     starting_points.push_back(spline.control_points.front());
   }

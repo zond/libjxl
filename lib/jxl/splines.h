@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -78,6 +79,28 @@ class QuantizedSpline {
   Status Decode(const std::vector<uint8_t>& context_map,
                 ANSSymbolReader* decoder, BitReader* br,
                 size_t max_control_points, size_t* total_num_control_points);
+
+  void Describe() {
+    std::cerr << "QuantizedSpline {";
+    std::cerr << "conrol_points: vec![";
+    for (const auto& point : control_points_) {
+      std::cerr << "(" << point.first << ", " << point.second << "), ";
+    }
+    std::cerr << "], color_dct: [";
+    for (const auto& col : color_dct_) {
+      std::cerr << "[";
+      for (const auto val : col) {
+        std::cerr << val << ", ";
+      }
+      std::cerr << "], ";
+    }
+    std::cerr << "], sigma_dct: [";
+    for (const auto val : sigma_dct_) {
+      std::cerr << val << ", ";
+    }
+    std::cerr << "],";
+    std::cerr << "}";
+  };
 
  private:
   friend class QuantizedSplineEncoder;
