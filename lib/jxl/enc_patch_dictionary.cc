@@ -104,11 +104,14 @@ Status PatchDictionaryEncoder::Encode(const PatchDictionary& pdic,
       }
       for (size_t k = 0; k < blending_stride; ++k, ++blend_pos) {
         const PatchBlending& info = pdic.blendings_[blend_pos];
+        std::cerr << "writing blend mode " << int(info.mode) << "\n";
         add_num(kPatchBlendModeContext, static_cast<uint32_t>(info.mode));
         if (UsesAlpha(info.mode) && choose_alpha) {
+          std::cerr << "writing alpha channel " << info.alpha_channel << "\n";
           add_num(kPatchAlphaChannelContext, info.alpha_channel);
         }
         if (UsesClamp(info.mode)) {
+          std::cerr << "writing clamp " << info.clamp << "\n";
           add_num(kPatchClampContext, TO_JXL_BOOL(info.clamp));
         }
       }

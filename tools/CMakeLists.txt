@@ -142,6 +142,26 @@ if(JPEGXL_ENABLE_TOOLS)
   )
   list(APPEND TOOL_BINARIES cjxl)
 
+  add_executable(patch_gen patch_gen.cc)
+  target_link_libraries(patch_gen
+    jxl
+    jxl_extras_codec
+    jxl_threads
+    jxl_tool
+    jxl_extras-internal
+  )
+  list(APPEND TOOL_BINARIES patch_gen)
+
+  add_executable(weighted_pred_gen weighted_pred_gen.cc)
+  target_link_libraries(weighted_pred_gen
+    jxl
+    jxl_extras_codec
+    jxl_threads
+    jxl_tool
+    jxl_extras-internal
+  )
+  list(APPEND TOOL_BINARIES weighted_pred_gen)
+
   # Main decompressor.
   add_executable(djxl djxl_main.cc)
   target_link_libraries(djxl

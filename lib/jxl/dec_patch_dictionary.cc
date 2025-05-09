@@ -28,6 +28,27 @@
 
 namespace jxl {
 
+  std::string modename(PatchBlendMode mode) {
+    switch (mode) {
+      case PatchBlendMode::kNone:
+        return "PatchBlendMode::None";
+      case PatchBlendMode::kReplace:
+        return "PatchBlendMode::Replace";
+      case PatchBlendMode::kAdd:
+        return "PatchBlendMode::Add";
+      case PatchBlendMode::kMul:
+        return "PatchBlendMode::Mul";
+      case PatchBlendMode::kBlendAbove:
+        return "PatchBlendMode::BlendAbove";
+      case PatchBlendMode::kBlendBelow:
+        return "PatchBlendMode::BlendBelow";
+      case PatchBlendMode::kAlphaWeightedAddAbove:
+        return "PatchBlendMode::kAlphaWeightedAddAbove";
+      case PatchBlendMode::kAlphaWeightedAddBelow:
+        return "PatchBlendMode::AlphaWeightedAddBelow";
+    }
+  }
+  
 Status PatchDictionary::Decode(JxlMemoryManager* memory_manager, BitReader* br,
                                size_t xsize, size_t ysize,
                                size_t num_extra_channels,

@@ -11,6 +11,7 @@
 #include <jxl/memory_manager.h>
 
 #include <array>
+#include <iostream>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -67,6 +68,8 @@ enum class PatchBlendMode : uint8_t {
   kAlphaWeightedAddBelow = 7,
 };
 
+std::string modename(PatchBlendMode mode);
+
 constexpr uint8_t kNumPatchBlendModes =
     static_cast<uint8_t>(PatchBlendMode::kAlphaWeightedAddBelow) + 1;
 
@@ -84,17 +87,26 @@ struct PatchBlending {
   PatchBlendMode mode;
   uint32_t alpha_channel;
   bool clamp;
+  void print() const {
+    std::cerr << "PatchBlending{mode: " << modename(mode) << ", alpha_channel: " << alpha_channel << ", clamp: " << (clamp ? "true" : "false") << "}";
+  }
 };
 
 // Position and size of the patch in the reference frame.
 struct PatchReferencePosition {
   size_t ref, x0, y0, xsize, ysize;
+  void print() const {
+    std::cerr << "PatchReferencePosition{reference: " << ref << ", x0: " << x0 << ", y0: " << y0 << ", xsize: " << xsize << ", ysize: " << ysize << "}";
+  }
 };
 
 struct PatchPosition {
   // Position of top-left corner of the patch in the image.
   size_t x, y;
   size_t ref_pos_idx;
+  void print() const {
+    std::cerr << "PatchPosition{x: " << x << ", y: " << y << ", ref_pos_idx: " << ref_pos_idx << "}";
+  }
 };
 
 struct PassesSharedState;
@@ -134,6 +146,42 @@ class PatchDictionary {
 
   std::vector<size_t> GetPatchesForRow(size_t y) const;
 
+  void print() const {
+    std::cerr << "PatchesDictionary{positions: vec![";
+    for (const auto& pos : positions_) {
+      pos.print();
+      std::cerr << ", ";
+    }
+    std::cerr << "], ref_positions: vec![";
+    for (const auto& pos : ref_positions_) {
+      pos.print();
+      std::cerr << ", ";
+    }
+    std::cerr << "], blendings: vec![";
+    for (const auto& blend : blendings_) {
+      blend.print();
+      std::cerr << ", ";
+    }
+    std::cerr << "], blendings_stride: " << blendings_stride_ << ", num_patches: vec![";
+    for (const auto& num_patch : num_patches_) {
+      std::cerr << num_patch << ", ";
+    }
+    std::cerr << "], patch_tree: vec![";
+    for (const auto& node : patch_tree_) {
+      node.print();
+      std::cerr << ", ";
+    }
+    std::cerr << "], sorted_patches_y0: vec![";
+    for (const auto& spy : sorted_patches_y0_) {
+      std::cerr << "(" << spy.first << "," << spy.second << "), ";
+    }
+    std::cerr << "], sorted_patches_y1: vec![";
+    for (const auto& spy : sorted_patches_y1_) {
+      std::cerr << "(" << spy.first << "," << spy.second << "), ";
+    }
+    std::cerr << "]}";
+  };
+
  private:
   friend class PatchDictionaryEncoder;
 
@@ -153,6 +201,9 @@ class PatchDictionary {
     // contain the row y_center.
     size_t start;
     size_t num;
+    void print() const {
+      std::cerr << "PatchTreeNode{left_child: " << left_child << ", right_child: " << right_child << ", y_center: " << y_center << ", start: " << start << ", num: " << num << "}";
+    }
   };
   std::vector<PatchTreeNode> patch_tree_;
   // Number of patches for each row.

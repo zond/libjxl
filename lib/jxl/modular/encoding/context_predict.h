@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <iostream>
 
 #include "lib/jxl/base/bits.h"
 #include "lib/jxl/base/compiler_specific.h"
@@ -103,7 +104,8 @@ struct State {
   JXL_INLINE uint32_t ErrorWeight(uint64_t x, uint32_t maxweight) const {
     int shift = static_cast<int>(FloorLog2Nonzero(x + 1)) - 5;
     if (shift < 0) shift = 0;
-    return 4 + ((maxweight * divlookup[x >> shift]) >> shift);
+    uint32_t res = 4 + ((maxweight * divlookup[x >> shift]) >> shift);
+    return res;
   }
 
   // Approximates the weighted average of the input values with the given
