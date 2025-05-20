@@ -413,17 +413,17 @@ class DequantMatrices {
 
   Status EnsureComputed(JxlMemoryManager* memory_manager, uint32_t acs_mask);
 
- private:
   static constexpr size_t kTotalTableSize = kSumRequiredXy * kDCTBlockSize * 3;
+  const float* table_;
+  const float* inv_table_;
+  size_t table_offsets_[AcStrategy::kNumValidStrategies * 3];
+ private:
 
   uint32_t computed_mask_ = 0;
   // kTotalTableSize entries followed by kTotalTableSize for inv_table
   AlignedMemory table_storage_;
-  const float* table_;
-  const float* inv_table_;
   float dc_quant_[3] = {kDCQuant[0], kDCQuant[1], kDCQuant[2]};
   float inv_dc_quant_[3] = {kInvDCQuant[0], kInvDCQuant[1], kInvDCQuant[2]};
-  size_t table_offsets_[AcStrategy::kNumValidStrategies * 3];
   std::vector<QuantEncoding> encodings_;
 };
 

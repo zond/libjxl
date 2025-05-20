@@ -109,7 +109,6 @@ using DF4 = HWY_CAPPED(float, 4);
 hwy::HWY_NAMESPACE::Vec<DF4> InterpolateVec(
     hwy::HWY_NAMESPACE::Vec<DF4> scaled_pos, const float* array) {
   HWY_CAPPED(int32_t, 4) di;
-
   auto idx = ConvertTo(di, scaled_pos);
 
   auto frac = Sub(scaled_pos, ConvertTo(DF4(), idx));
@@ -118,7 +117,6 @@ hwy::HWY_NAMESPACE::Vec<DF4> InterpolateVec(
   // it's probably slower.
   auto a = GatherIndex(DF4(), array, idx);
   auto b = GatherIndex(DF4(), array + 1, idx);
-
   return Mul(a, FastPowf(DF4(), Div(b, a), frac));
 }
 
@@ -133,7 +131,7 @@ Status GetQuantWeights(
   for (size_t c = 0; c < 3; c++) {
     float bands[DctQuantWeightParams::kMaxDistanceBands] = {
         distance_bands[c][0]};
-    if (bands[0] < kAlmostZero) return JXL_FAILURE("Invalid distance bands");
+        if (bands[0] < kAlmostZero) return JXL_FAILURE("Invalid distance bands");
     for (size_t i = 1; i < num_bands; i++) {
       bands[i] = bands[i - 1] * Mult(distance_bands[c][i]);
       if (bands[i] < kAlmostZero) return JXL_FAILURE("Invalid distance bands");
@@ -164,6 +162,7 @@ Status ComputeQuantTable(const QuantEncoding& encoding,
                          float* JXL_RESTRICT table,
                          float* JXL_RESTRICT inv_table, size_t table_num,
                          QuantTable kind, size_t* pos) {
+                          printf("ComputeQuantTable %d\n", encoding.mode);
   constexpr size_t N = kBlockDim;
   size_t quant_table_idx = static_cast<size_t>(kind);
   size_t wrows = 8 * DequantMatrices::required_size_x[quant_table_idx];
@@ -327,6 +326,9 @@ Status ComputeQuantTable(const QuantEncoding& encoding,
   }
   size_t prev_pos = *pos;
   HWY_CAPPED(float, 64) d;
+  if (encoding.mode == QuantEncoding::kQuantModeDCT4X8) {
+    printf("indices: %zu-%zu, inv vals: [", *pos, *pos + num * 3);  
+  }
   for (size_t i = 0; i < num * 3; i += Lanes(d)) {
     auto inv_val = LoadU(d, weights.data() + i);
     if (JXL_UNLIKELY(!AllFalse(d, Ge(inv_val, Set(d, 1.0f / kAlmostZero))) ||
@@ -334,8 +336,21 @@ Status ComputeQuantTable(const QuantEncoding& encoding,
       return JXL_FAILURE("Invalid quantization table");
     }
     auto val = Div(Set(d, 1.0f), inv_val);
+
+    if (encoding.mode == QuantEncoding::kQuantModeDCT4X8) {
+      float inv_val_a[Lanes(d)];
+      StoreU(inv_val, d, inv_val_a);
+      float val_a[Lanes(d)];
+      StoreU(val, d, val_a);
+      for (size_t j = 0; j < Lanes(d); j++) {
+        printf("%f, ", inv_val_a[j]);
+      }
+    }
     StoreU(val, d, table + *pos + i);
     StoreU(inv_val, d, inv_table + *pos + i);
+  }
+  if (encoding.mode == QuantEncoding::kQuantModeDCT4X8) {
+    printf("]\n");  
   }
   (*pos) += 3 * num;
 
@@ -344,14 +359,22 @@ Status ComputeQuantTable(const QuantEncoding& encoding,
   // slightly simpler.
   size_t xs = DequantMatrices::required_size_x[quant_table_idx];
   size_t ys = DequantMatrices::required_size_y[quant_table_idx];
+  if (encoding.mode == QuantEncoding::kQuantModeDCT4X8) {
+    printf("xs: %zu, ys: %zu, zeroing: [", xs, ys);
+  }
   CoefficientLayout(&ys, &xs);
   for (size_t c = 0; c < 3; c++) {
     for (size_t y = 0; y < ys; y++) {
       for (size_t x = 0; x < xs; x++) {
-        inv_table[prev_pos + c * ys * xs * kDCTBlockSize + y * kBlockDim * xs +
-                  x] = 0;
+        if (encoding.mode == QuantEncoding::kQuantModeDCT4X8) {
+          printf("%zu, ", prev_pos + c * ys * xs * kDCTBlockSize + y * kBlockDim * xs + x);
+        }
+        inv_table[prev_pos + c * ys * xs * kDCTBlockSize + y * kBlockDim * xs + x] = 0;
       }
     }
+  }
+  if (encoding.mode == QuantEncoding::kQuantModeDCT4X8) {
+    printf("]\n");
   }
   return true;
 }

@@ -73,6 +73,24 @@ TEST(QuantWeightsTest, DC) {
 void RoundtripMatrices(const std::vector<QuantEncoding>& encodings) {
   ASSERT_TRUE(encodings.size() == kNumQuantTables);
   auto mat = jxl::make_unique<DequantMatrices>();
+  JxlMemoryManager* memory_manager = jxl::test::MemoryManager();
+  ASSERT_TRUE(mat->EnsureComputed(memory_manager, ~0u));
+  printf("offsets: [");
+  for (size_t i = 0; i < AcStrategy::kNumValidStrategies * 3; i++) {
+    printf("%zu, ", mat->table_offsets_[i]);
+  }
+  printf("]\ntarget_inv_table: [");
+  for (size_t i = 0; i < AcStrategy::kNumValidStrategies; i++) {    
+    size_t qt_idx = static_cast<size_t>(kAcStrategyToQuantTableMap[i]);
+    size_t size = mat->required_size_x[qt_idx] * mat->required_size_y[qt_idx] * kDCTBlockSize;
+    for (size_t c = 0; c < 3; c++) {
+      size_t start = mat->table_offsets_[3 * i + c];
+      for (size_t j = start; j < start+size; j += size / 10) {
+        printf("%ff32, ", mat->inv_table_[j]);
+      }
+    }
+  }
+  printf("]\n");
   auto metadata = jxl::make_unique<CodecMetadata>();
   FrameHeader frame_header(metadata.get());
   JXL_ASSIGN_OR_QUIT(
