@@ -737,6 +737,7 @@ Status LowMemoryRenderPipeline::RenderRect(size_t thread_id,
       prepare_io_rows(y, i);
 
       // Produce output rows.
+      printf("1: running stage %s\n", stages_[i]->GetName());
       JXL_RETURN_IF_ERROR(stages_[i]->ProcessRow(
           input_rows[i], output_rows, xpadding_for_output_[i],
           group_rect[i].xsize(), group_rect[i].x0(), image_y, thread_id));
@@ -779,6 +780,7 @@ Status LowMemoryRenderPipeline::RenderRect(size_t thread_id,
           i < first_image_dim_stage_ ? full_image_x0 - frame_x0 : full_image_x0;
       size_t y0 =
           i < first_image_dim_stage_ ? full_image_y - frame_y0 : full_image_y;
+      printf("2: running stage %s\n", stages_[i]->GetName());
       JXL_RETURN_IF_ERROR(stages_[i]->ProcessRow(
           input_rows[first_trailing_stage_], output_rows,
           /*xextra=*/0, full_image_x1 - full_image_x0, x0, y0, thread_id));
@@ -801,6 +803,7 @@ Status LowMemoryRenderPipeline::RenderPadding(size_t thread_id, Rect rect) {
     stages_[first_image_dim_stage_ - 1]->ProcessPaddingRow(
         input_rows, rect.xsize(), rect.x0(), rect.y0() + y);
     for (size_t i = first_image_dim_stage_; i < stages_.size(); i++) {
+      printf("3: running stage %s\n", stages_[i]->GetName());
       JXL_RETURN_IF_ERROR(stages_[i]->ProcessRow(
           input_rows, output_rows,
           /*xextra=*/0, rect.xsize(), rect.x0(), rect.y0() + y, thread_id));

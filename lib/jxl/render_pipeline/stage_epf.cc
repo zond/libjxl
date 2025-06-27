@@ -221,6 +221,7 @@ class EPF1Stage : public RenderPipelineStage {
   Status ProcessRow(const RowInfo& input_rows, const RowInfo& output_rows,
                     size_t xextra, size_t xsize, size_t xpos, size_t ypos,
                     size_t thread_id) const final {
+    printf("epf 1 ((%zu, %zu)): before: row[0][16]=%f\n", xpos, ypos, GetInputRow(input_rows, 0, 0)[18]);
     DF df;
     xextra = RoundUpTo(xextra, Lanes(df));
     const float* JXL_RESTRICT row_sigma =
@@ -354,6 +355,7 @@ class EPF1Stage : public RenderPipelineStage {
       Store(Mul(Y, inv_w), df, GetOutputRow(output_rows, 1, 0) + x);
       Store(Mul(B, inv_w), df, GetOutputRow(output_rows, 2, 0) + x);
     }
+    printf("epf 1: after: row[0][16]=%f\n", GetOutputRow(output_rows, 0, 0)[16]);
     return true;
   }
 

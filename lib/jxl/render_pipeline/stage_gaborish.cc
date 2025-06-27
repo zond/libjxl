@@ -57,6 +57,7 @@ class GaborishStage : public RenderPipelineStage {
                     size_t xextra, size_t xsize, size_t xpos, size_t ypos,
                     size_t thread_id) const final {
     const HWY_FULL(float) d;
+    printf("gab ((%zu, %zu)): before: row[0][16]=%f\n", xpos, ypos, GetInputRow(input_rows, 0, 0)[17]);
     for (size_t c = 0; c < 3; c++) {
       float* JXL_RESTRICT row_t = GetInputRow(input_rows, c, -1);
       float* JXL_RESTRICT row_m = GetInputRow(input_rows, c, 0);
@@ -92,6 +93,7 @@ class GaborishStage : public RenderPipelineStage {
         Store(pixels, d, row_out + x);
       }
     }
+    printf("gab: after: row[0][16]=%f\n", GetOutputRow(output_rows, 0, 0)[16]);
     return true;
   }
 #undef LoadMaybeU

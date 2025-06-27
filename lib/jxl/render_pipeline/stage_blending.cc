@@ -177,6 +177,7 @@ class BlendingStage : public RenderPipelineStage {
                 : zeroes_.data();
       }
     }
+    printf("position (%zu, %zu)\n", xpos, ypos);
     return PerformBlending(memory_manager, bg_row_ptrs_.data(),
                            fg_row_ptrs_.data(), fg_row_ptrs_.data(), 0, xsize,
                            blending_info_[0], blending_info_.data() + 1,

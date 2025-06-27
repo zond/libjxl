@@ -174,6 +174,7 @@ class WriteToOutputStage : public RenderPipelineStage {
   Status ProcessRow(const RowInfo& input_rows, const RowInfo& output_rows,
                     size_t xextra, size_t xsize, size_t xpos, size_t ypos,
                     size_t thread_id) const final {
+    printf("write ((%zu, %zu)): before: row[0][16]=%f\n", xpos, ypos, GetInputRow(input_rows, 0, 0)[16]);
     JXL_ENSURE(xextra == 0);
     JXL_ENSURE(main_.run_opaque_ || main_.buffer_);
     if (ypos >= height_) return true;
@@ -205,6 +206,7 @@ class WriteToOutputStage : public RenderPipelineStage {
         OutputBuffers(extra, thread_id, ypos, xstart, len, line_buffers);
       }
     }
+    printf("write: after: row[0][16]=%f\n", xpos, ypos, GetInputRow(input_rows, 0, 0)[16]);
     return true;
   }
 

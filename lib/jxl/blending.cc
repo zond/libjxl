@@ -44,6 +44,7 @@ Status PerformBlending(
     const float* const* fg, float* const* out, size_t x0, size_t xsize,
     const PatchBlending& color_blending, const PatchBlending* ec_blending,
     const std::vector<ExtraChannelInfo>& extra_channel_info) {
+  printf("bg: %f, fg: %f\n", bg[0][16], fg[0][16]);
   bool has_alpha = false;
   size_t num_ec = extra_channel_info.size();
   for (size_t i = 0; i < num_ec; i++) {
@@ -186,6 +187,7 @@ Status PerformBlending(
   for (size_t i = 0; i < 3 + num_ec; i++) {
     if (xsize != 0) memcpy(out[i] + x0, tmp.Row(i), xsize * sizeof(**out));
   }
+  printf("out: %f\n", out[0][16]);
   return true;
 }
 

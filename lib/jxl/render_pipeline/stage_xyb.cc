@@ -45,6 +45,7 @@ class XYBStage : public RenderPipelineStage {
     JXL_ENSURE(xextra == 0);
     const size_t xsize_v = RoundUpTo(xsize, Lanes(d));
     float* JXL_RESTRICT row0 = GetInputRow(input_rows, 0, 0);
+    printf("xyb ((%zu, %zu)): before: row[0][16]=%f\n", xpos, ypos, row0[16]);
     float* JXL_RESTRICT row1 = GetInputRow(input_rows, 1, 0);
     float* JXL_RESTRICT row2 = GetInputRow(input_rows, 2, 0);
     // All calculations are lane-wise, still some might require
@@ -93,6 +94,7 @@ class XYBStage : public RenderPipelineStage {
     msan::PoisonMemory(row0 + xsize, sizeof(float) * (xsize_v - xsize));
     msan::PoisonMemory(row1 + xsize, sizeof(float) * (xsize_v - xsize));
     msan::PoisonMemory(row2 + xsize, sizeof(float) * (xsize_v - xsize));
+    printf("xyb: after: row[0][16]=%f\n", row0[16]);
     return true;
   }
 
